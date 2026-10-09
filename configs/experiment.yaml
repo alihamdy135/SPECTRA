@@ -1,0 +1,54 @@
+day12_dir: /kaggle/input/spectra-day1-2-artifacts-v1
+model_path: ""
+work_dir: /kaggle/working
+lora_names:
+  - math
+  - code
+  - hybrid
+domain_to_split:
+  - [math, math]
+  - [code, coding]
+  - [hybrid, hybrid]
+  - [coding, coding]
+seed: 42
+evaluation_seeds:
+  - 42
+  - 123
+  - 256
+  - 512
+  - 1024
+lora_r: 8
+lora_alpha: 16
+lora_dropout: 0.05
+lora_targets:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+train_epochs: 2
+train_batch: 2
+grad_accum: 4
+learning_rate: 0.0002
+max_seq_len: 256
+gen_max_new: 128
+generation_batch_size: 4
+cma_pop: 8
+cma_iters: 40
+cma_sigma0: 0.3
+n_adapt: 15
+n_test: 50
+n_bootstrap: 1000
+ties_density: 0.5
+router_prior_weight: 0.1
+grid_points: 25
+grid_evaluations: 35
+exp3_adapt_counts:
+  - 5
+  - 10
+  - 15
+  - 20
+exp5_test_count: 20
+exp6_test_per_domain: 15
+exp6_adapt_per_domain: 5
+dtype: float16
+trust_remote_code: false

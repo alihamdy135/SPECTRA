@@ -1,0 +1,12 @@
+numpy
+pandas
+scipy
+torch
+transformers
+peft
+datasets
+accelerate
+cma
+safetensors
+PyYAML
+rouge-score
