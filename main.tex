@@ -1,9 +1,8 @@
-\documentclass[journal]{IEEEtran}
+\documentclass[preprint,12pt]{elsarticle}
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{multirow}
-\usepackage{multicol}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{xcolor}
@@ -14,11 +13,9 @@
 \usetikzlibrary{arrows.meta,shapes,positioning,calc,fit,backgrounds,decorations.pathmorphing}
 \usepackage{url}
 \usepackage{hyperref}
-\usepackage{cite}
 \usepackage{subfig}
 \usepackage{tabularx}
 \usepackage{array}
-\usepackage{balance}
 \usepackage{microtype}
 
 \hypersetup{
@@ -32,23 +29,29 @@
 \newtheorem{proposition}{Proposition}
 \newtheorem{remark}{Remark}
 
+\journal{Information Fusion}
+\emergencystretch=3em
+
 \begin{document}
 
-\title{SPECTRA: Domain-Adaptive LoRA Merging with\\
-Test-Time Coefficient Optimization}
+\begin{frontmatter}
 
-\author{Mohamed~S.~Amer, Ali~Hamdi, and Ahmed~B.~Zaky %
-\thanks{Mohamed S. Amer, Ali Hamdi, and Ahmed B. Zaky  are with the
-Department of Computer Science and Engineering, Egypt-Japan University
-of Science and Technology (E-JUST), Alexandria, Egypt.
-E-mail: \{mohamed.320230188, ali.320230101, ahmed.zaky\}@ejust.edu.eg.}%
-\thanks{Manuscript received; revised.}}
+%\title{SPECTRA: Domain-Adaptive LoRA Merging with Test-Time Coefficient Optimization}
 
-\markboth{IEEE Transactions on Neural Networks and Learning Systems}{}
+%\title{SPECTRA: Test-Time Adaptive Fusion of Language Model Adapters via Domain Routing and Evolutionary Optimization}
 
-\maketitle
+\title{SPECTRA: Adaptive Knowledge Fusion of Heterogeneous LoRA Experts Under Unknown Domains}
 
-%=============================================================================
+\author[ejust]{Mohamed S. Amer}
+\ead{mohamed.320230188@ejust.edu.eg}
+\author[ejust]{Ali Hamdi}
+\ead{ali.320230101@ejust.edu.eg}
+\author[ejust,benha]{Ahmed B. Zaky\corref{cor1}}
+\ead{ahmed.zaky@ejust.edu.eg,ahmed.zaky@feng.bu.edu.eg}
+\cortext[cor1]{Corresponding author}
+\address[ejust]{Department of Computer Science and Engineering, Egypt-Japan University of Science and Technology (E-JUST), Alexandria, Egypt}
+\address[benha]{Faculty of Engineering at shoubra, Benha University, Egypt}
+
 \begin{abstract}
 Deploying a single instruction-tuned language model across heterogeneous task
 domains requires either re-training on each domain or accepting performance
@@ -78,17 +81,18 @@ bridges the gap between domain-agnostic merging and domain-oracle single-adapter
 deployment.
 \end{abstract}
 
-\begin{IEEEkeywords}
-Large language models, adapter merging, test-time adaptation, CMA-ES, LoRA,
-multi-domain learning, model merging, domain routing, parameter-efficient
-fine-tuning.
-\end{IEEEkeywords}
+\begin{keyword}
+Large language models \sep adapter merging \sep test-time adaptation \sep CMA-ES \sep LoRA \sep multi-domain learning \sep model merging \sep domain routing \sep parameter-efficient fine-tuning
+\end{keyword}
+
+\end{frontmatter}
+
 
 %=============================================================================
 \section{Introduction}
 \label{sec:intro}
 
-\IEEEPARstart{T}{he} deployment of large language models (LLMs) in production
+The deployment of large language models (LLMs) in production
 systems rarely maps cleanly onto a single, well-defined task domain.
 Real-world applications span mathematical reasoning, structured code synthesis,
 natural language understanding, and hybrid combinations of these, often
@@ -126,7 +130,7 @@ identifies the deployment domain from the test prompts themselves and then
 optimizes mixture coefficients accordingly, using only domain-unlabeled
 prompt-response pairs.
 
-\begin{figure*}[t]
+\begin{figure}[t]
 \centering
 \resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
@@ -237,7 +241,7 @@ function augmented with a soft KL routing prior. The final merged model
 $W^* = W_0 + \sum_k c_k^* \Delta W_k$ incurs no additional per-token
 runtime forward-pass overhead relative to a single-adapter deployment.}
 \label{fig:overview}
-\end{figure*}
+\end{figure}
 
 This paper introduces SPECTRA, a framework that couples domain routing with
 evolutionary coefficient search to adapt adapter mixture weights at test time.
@@ -618,8 +622,7 @@ $\texttt{tolx} = 10^{-6}$ is reached, where convergence is defined as the
 condition $|f_{\text{best}} - f_{\text{worst}}| < \texttt{tolfun}$ within a
 generation. The final mixture coefficients are
 $\mathbf{c}^* = \mathrm{softmax}(\mathbf{m}^{(G)})$.
-
-\begin{algorithm}[t]
+\begin{algorithm}[H] % Requires \usepackage{float} in preamble; or use [!htbp]
 \caption{SPECTRA Adaptation Procedure}
 \label{alg:spectra}
 \begin{algorithmic}[1]
@@ -635,8 +638,7 @@ $\mathbf{c}^* = \mathrm{softmax}(\mathbf{m}^{(G)})$.
     \Comment{Prompt NLL, 64-token truncation}
 \EndFor
 \State $\tau \leftarrow \mathrm{std}(\{\ell_k\})$
-\State $r_k \leftarrow \frac{\exp(-\ell_k/\tau)}{\sum_j \exp(-\ell_j/\tau)}$
-    for all $k$
+\State $r_k \leftarrow \frac{\exp(-\ell_k/\tau)}{\sum_j \exp(-\ell_j/\tau)}$ for all $k$
     \Comment{Routing weights}
 
 \State \Comment{\textit{Phase 2: Initialization (in raw search space $\mathbf{z}$)}}
@@ -658,8 +660,7 @@ $\mathbf{c}^* = \mathrm{softmax}(\mathbf{m}^{(G)})$.
 \State \Comment{\textit{Phase 3: CMA-ES Search}}
 \State Initialize $\mathcal{N}(\mathbf{z}^{(0)}, \sigma_0^2 I)$
 \For{$g = 1$ to $G$}
-    \State Sample $\{\mathbf{z}_i\}_{i=1}^P \sim
-           \mathcal{N}(\mathbf{m}^{(g)}, (\sigma^{(g)})^2 C^{(g)})$
+    \State Sample $\{\mathbf{z}_i\}_{i=1}^P \sim \mathcal{N}(\mathbf{m}^{(g)}, (\sigma^{(g)})^2 C^{(g)})$
     \For{$i = 1$ to $P$}
         \State $\mathbf{c}_i \leftarrow \mathrm{softmax}(\mathbf{z}_i)$
         \State $W_i \leftarrow W_0 + \sum_k (c_i)_k \Delta W_k$
@@ -730,9 +731,9 @@ contains 151,643 tokens with left-padding enabled.
 
 \subsubsection{Datasets}
 
-Three domain-specific datasets, each containing 5,000 examples, are used; the data were loaded from the SPECTRA Day 1--2 artifact hosted on Kaggle (version 2) \cite{spectra_dataset}.
+Three domain-specific datasets, each containing 5,000 examples, are used.
 The \textit{math} split contains algebraic reasoning problems with step-by-step
-solutions formatted in \LaTeX\ with boxed final answers. The \textit{coding}
+solutions. The \textit{coding}
 split contains function synthesis tasks with Python code solutions. The
 \textit{hybrid} split combines mathematical reasoning with code synthesis,
 requiring both types of skill.
@@ -793,10 +794,11 @@ The hybrid adapter, which produces the most verbose outputs (reaching ROUGE-L
 of 0.3944 in isolation), benefits the ROUGE-L of the oracle single-adapter
 average without necessarily reflecting correctness.
 
-\begin{table*}[t]
+\begin{table}[t]
 \centering
 \caption{Main Comparison Results on the Held-Out Test Sets (50 Examples Per Domain, 5 Seeds). Composite $= 0.40 \times \text{EM} + 0.35 \times \text{F1} + 0.25 \times \text{RL}$. Best result per column in bold. SPECTRA results include 95\% bootstrap confidence intervals.}
 \label{tab:main}
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{lcccccc}
 \toprule
 \multirow{2}{*}{\textbf{Method}} &
@@ -816,8 +818,8 @@ Single-Adapter Oracle & 0.0560 & 0.0080 & 0.1424 & \textbf{0.2792} & 0.1421 & [0
 \midrule
 \textbf{SPECTRA (Ours)} & \textbf{0.0667} & 0.0126 & \textbf{0.1606} & 0.2648 & \textbf{0.1491} & [0.1247, 0.1752] \\
 \bottomrule
-\end{tabular}
-\end{table*}
+\end{tabular}}
+\end{table}
 
 These results indicate that SPECTRA successfully bridges the gap between
 domain-agnostic merging and domain-oracle adaptation. The improvement of 0.0070
@@ -891,7 +893,7 @@ merge ($p = 0.763$) or equal merge ($p = 0.680$).
 \centering
 \caption{Statistical Significance: SPECTRA vs. Baselines. Paired $t$-test on per-example composite scores pooled across 5 seeds ($n = 250$ pairs per domain; see text for dependency discussion). $\Delta = \bar{s}_{\text{SPECTRA}} - \bar{s}_{\text{baseline}}$; $d$ = Cohen's $d$. Significance threshold $p < 0.05$.}
 \label{tab:significance}
-\resizebox{\columnwidth}{!}{%
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llcccl}
 \toprule
 \textbf{Domain} & \textbf{Baseline} & $\Delta$ & $t$ & $p$ & \textbf{Sig.} \\
@@ -1258,6 +1260,21 @@ This two-level NLL approach---prompt NLL for domain identification and answer
 NLL for coefficient optimization---forms the core of SPECTRA's adaptation
 signal and represents the primary conceptual contribution of this framework.
 
+A natural question is how a method that never observes domain labels can
+reach the level of the domain-oracle baseline, and even edge past it
+(0.1491 versus 0.1421 composite). The explanation is that the oracle and
+SPECTRA solve different problems. The oracle knows the true domain, but it can
+only deploy one domain-specific adapter in isolation. SPECTRA searches over a
+continuous space of mixture coefficients, so it can assign a small share to
+neighboring adapters that contribute complementary skills, producing a model
+that no single adapter represents. This suggests that identifying the correct
+domain and finding the best coefficients are separate problems, and that
+knowing the former does not solve the latter. We nevertheless treat the margin
+with caution: the 95\% confidence intervals of the two methods overlap
+substantially, and the oracle remains stronger on ROUGE-L. The result is
+therefore best read as SPECTRA recovering near-oracle performance without
+domain labels, not as a significant improvement over the oracle.
+
 \subsection{When SPECTRA Does Not Win}
 
 The most notable failure to achieve statistical significance is the hybrid
@@ -1414,7 +1431,31 @@ Transformers, PEFT, and CMA-ES libraries, whose infrastructure made this
 work possible.
 
 %=============================================================================
-\bibliographystyle{IEEEtran}
+\section*{Data availability}
+The MATH benchmark is available from its original authors' repository at
+\url{https://github.com/hendrycks/math} \cite{hendrycksmath2021}. The Google
+DeepMind Mathematics Dataset is available from its official repository at
+\url{https://github.com/google-deepmind/mathematics_dataset}
+\cite{saxton2019math}. The coding data are from APPS, released by its original
+authors at \url{https://github.com/hendrycks/apps}
+\cite{hendrycksapps2021}. The hybrid math-instruction data are from MathInstruct,
+released by TIGER-AI-Lab at
+\url{https://huggingface.co/datasets/TIGER-Lab/MathInstruct}
+\cite{yue2024mammoth}. The mathematical-domain preparation also used a
+contest-problem compilation described as covering AIME, IMO, and other
+competition problems. The project artifacts do not retain a record-level
+mapping from this compilation to the official sources. Official IMO problem
+statements are available at
+\url{https://www.imo-official.org/problems/}. The Mathematical Association of
+America's official AIME competition information and past-problem materials are
+available at \url{https://maa.org/maa-invitational-competitions/} and
+\url{https://maa.org/math-competitions/amc-preparation-materials-for-purchase/}.
+
+The experimental corpora contain 5,000 sampled examples per domain (15,000
+total); the links above identify the benchmark releases and official contest
+resources referenced here.
+
+%=============================================================================
 \begin{thebibliography}{99}
 
 \bibitem{hu2022lora}
@@ -1623,10 +1664,26 @@ L.~Wang, H.~Lin, X.~Tang, Q.~Lu, B.~Zheng, L.~Shi, and J.~Hou,
 ``Qwen2 technical report,''
 \textit{arXiv preprint arXiv:2407.10671}, 2024.
 
-\bibitem{spectra_dataset}
-Ali~320230101, ``spectra-day1-2-artifacts-v1,'' Kaggle dataset, version 2,
-Jul. 16, 2026. [Online]. Available:
-\url{https://www.kaggle.com/datasets/ali320230101/spectra-day1-2-artifacts-v1}
+\bibitem{hendrycksmath2021}
+D.~Hendrycks, C.~Burns, S.~Kadavath, A.~Arora, S.~Basart, E.~Tang, D.~Song,
+and J.~Steinhardt, ``Measuring Mathematical Problem Solving With the MATH
+Dataset,'' in \textit{Advances in Neural Information Processing Systems}, 2021.
+
+\bibitem{saxton2019math}
+D.~Saxton, E.~Grefenstette, F.~Hill, and P.~Kohli, ``Analysing Mathematical
+Reasoning Abilities of Neural Models,'' arXiv:1904.01557, 2019.
+
+\bibitem{hendrycksapps2021}
+D.~Hendrycks, S.~Basart, S.~Kadavath, M.~Mazeika, A.~Arora, E.~Guo,
+C.~Burns, S.~Puranik, H.~He, D.~Song, and J.~Steinhardt, ``Measuring Coding
+Challenge Competence With APPS,'' in
+\textit{Advances in Neural Information Processing Systems}, 2021.
+
+\bibitem{yue2024mammoth}
+X.~Yue, X.~Qu, G.~Zhang, Y.~Fu, W.~Huang, H.~Sun, Y.~Su, and W.~Chen,
+``MAmmoTH: Building Math Generalist Models through Hybrid Instruction Tuning,''
+in \textit{Proc. International Conference on Learning Representations (ICLR)},
+2024.
 
 \end{thebibliography}
 
